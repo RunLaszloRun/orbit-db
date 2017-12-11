@@ -68,6 +68,7 @@ describe('orbit-db - Persistency', function() {
       const items = db.iterator({ limit: -1 }).collect()
       assert.equal(items.length, amount)
       assert.equal(items[0].payload.value, 'hello' + (entryCount - amount))
+      assert.equal(items[1].payload.value, 'hello' + (entryCount - amount + 1))
       assert.equal(items[items.length - 1].payload.value, 'hello99')
     })
 
