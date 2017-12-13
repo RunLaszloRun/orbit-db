@@ -13,8 +13,10 @@ const dbPath2 = './orbitdb/tests/replication/2'
 const ipfsPath1 = './orbitdb/tests/replication/1/ipfs'
 const ipfsPath2 = './orbitdb/tests/replication/2/ipfs'
 
+const MemStore = require('./utils/mem-store')
+
 describe('orbit-db - Replication', function() {
-  this.timeout(config.timeout)
+  this.timeout(config.timeout * 2)
 
   let ipfs1, ipfs2, orbitdb1, orbitdb2, db1, db2
 
@@ -27,6 +29,12 @@ describe('orbit-db - Replication', function() {
     rmrf.sync(dbPath2)
     ipfs1 = await startIpfs(config.daemon1)
     ipfs2 = await startIpfs(config.daemon2)
+    // Use memory store for quicker tests
+    const memstore = new MemStore()
+    ipfs1.object.put = memstore.put.bind(memstore)
+    ipfs1.object.get = memstore.get.bind(memstore)
+    ipfs2.object.put = memstore.put.bind(memstore)
+    ipfs2.object.get = memstore.get.bind(memstore)
     // Connect the peers manually to speed up test times
     await ipfs2.swarm.connect(ipfs1._peerInfo.multiaddrs._multiaddrs[0].toString())
     await ipfs1.swarm.connect(ipfs2._peerInfo.multiaddrs._multiaddrs[0].toString())
@@ -200,7 +208,7 @@ describe('orbit-db - Replication', function() {
       mapSeries(adds, i => db1.add('hello ' + i))
     })
 
-    it('emits correct replication info on fresh replication', async () => {
+    it.only('emits correct replication info on fresh replication', async () => {
       return new Promise(async (resolve, reject) => {
         let finished = false
         let eventCount = { 'replicate': 0, 'replicate.progress': 0, 'replicated': 0 }
@@ -241,10 +249,11 @@ describe('orbit-db - Replication', function() {
         let current = 0
         let total = 0
 
+
         db2.events.on('replicate', (address, entry) => {
           eventCount['replicate'] ++
           total = db2._replicationInfo.max
-          // console.log("[replicate] ", '#' + eventCount['replicate'] + ':', current, '/', total)
+          // console.log("[replicate] ", '#' + eventCount['replicate'] + ':', current, '/', total, '| Tasks (in/queued/running/out):', db2._loader.tasksRequested, '/',  db2._loader.tasksQueued,  '/', db2._loader.tasksRunning, '/', db2._loader.tasksFinished)
           events.push({ 
             event: 'replicate', 
             count: eventCount['replicate'], 
@@ -255,7 +264,7 @@ describe('orbit-db - Replication', function() {
         db2.events.on('replicate.progress', (address, hash, entry) => {
           eventCount['replicate.progress'] ++
           current = db2._replicationInfo.progress
-          // console.log("[progress]  ", '#' + eventCount['replicate.progress'] + ':', current, '/', total)
+          console.log("[progress]  ", '#' + eventCount['replicate.progress'] + ':', current, '/', total)
           assert.equal(db2._replicationInfo.progress, eventCount['replicate.progress'])
           events.push({ 
             event: 'replicate.progress', 
@@ -272,7 +281,7 @@ describe('orbit-db - Replication', function() {
         db2.events.on('replicated', (address, length) => {
           eventCount['replicated'] += length
           current = db2._replicationInfo.progress
-          console.log("[replicated]", '#' + eventCount['replicated'] + ':', current, '/', total)
+          console.log("[replicated]", '#' + eventCount['replicated'] + ':', current, '/', total, '| Tasks (in/queued/running/out):', db2._loader.tasksRequested, '/',  db2._loader.tasksQueued,  '/', db2._loader.tasksRunning, '/', db2._loader.tasksFinished)
           events.push({ 
             event: 'replicated', 
             count: eventCount['replicate'], 
