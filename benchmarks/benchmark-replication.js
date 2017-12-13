@@ -63,6 +63,7 @@ const conf2 = Object.assign({}, defaultConfig, {
 
 // Write loop
 const queryLoop = async (db) => {
+  const loop = () => queryLoop(db)
   if (metrics1.totalQueries < updateCount) {
     try {
       await db.add(metrics1.totalQueries)
@@ -72,7 +73,7 @@ const queryLoop = async (db) => {
     metrics1.totalQueries ++
     metrics1.lastTenSeconds ++
     metrics1.queriesPerSecond ++
-    setImmediate(() => queryLoop(db))
+    setImmediate(loop)
   }
 }
 
@@ -139,8 +140,7 @@ pMapSeries([conf1, conf2], d => startIpfs(d))
           let prevCount = 0
           setInterval(() => {
             try {
-              const result = db2.iterator({ limit: -1 }).collect()
-              metrics2.totalQueries = result.length
+              metrics2.totalQueries = db2._oplog.length
               metrics2.queriesPerSecond = metrics2.totalQueries - prevCount
               metrics2.lastTenSeconds += metrics2.queriesPerSecond
               prevCount = metrics2.totalQueries

@@ -272,7 +272,7 @@ describe('orbit-db - Replication', function() {
           eventCount['replicate.progress'] ++
           current = db2._replicationInfo.progress
           // console.log("[progress]  ", '#' + eventCount['replicate.progress'] + ':', current, '/', total, '| Tasks (in/queued/running/out):', db2._loader.tasksRequested, '/',  db2._loader.tasksQueued,  '/', db2._loader.tasksRunning, '/', db2._loader.tasksFinished)
-          assert.equal(db2._replicationInfo.progress, eventCount['replicate.progress'])
+          // assert.equal(db2._replicationInfo.progress, eventCount['replicate.progress'])
           events.push({ 
             event: 'replicate.progress', 
             count: eventCount['replicate.progress'], 
@@ -288,7 +288,17 @@ describe('orbit-db - Replication', function() {
         db2.events.on('replicated', (address, length) => {
           eventCount['replicated'] += length
           current = db2._replicationInfo.progress
-          // console.log("[replicated]", '#' + eventCount['replicated'] + ':', current, '/', total, '| Tasks (in/queued/running/out):', db2._loader.tasksRequested, '/',  db2._loader.tasksQueued,  '/', db2._loader.tasksRunning, '/', db2._loader.tasksFinished)
+          // console.log("[replicated]", '#' + eventCount['replicated'] + ':', current, '/', total, '| Tasks (in/queued/running/out):', db2._loader.tasksRequested, '/',  db2._loader.tasksQueued,  '/', db2._loader.tasksRunning, '/', db2._loader.tasksFinished, "|", db2._loader._stats.a, db2._loader._stats.b, db2._loader._stats.c, db2._loader._stats.d)
+          assert.equal(current, eventCount['replicated'])
+          assert.equal(total, expectedEventCount)
+
+          // Test the replicator state
+          assert.equal(db2._loader.tasksRequested >= current, true)
+          assert.equal(db2._loader.tasksQueued <= db2.options.referenceCount, true)
+          assert.equal(db2.options.referenceCount, 64)
+          assert.equal(db2._loader.tasksRunning, 0)
+          assert.equal(db2._loader.tasksFinished, current)
+
           events.push({ 
             event: 'replicated', 
             count: eventCount['replicate'], 
