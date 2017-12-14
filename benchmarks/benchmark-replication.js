@@ -63,17 +63,16 @@ const conf2 = Object.assign({}, defaultConfig, {
 
 // Write loop
 const queryLoop = async (db) => {
-  const loop = () => queryLoop(db)
   if (metrics1.totalQueries < updateCount) {
     try {
       await db.add(metrics1.totalQueries)
     } catch (e) {
-        console.error("!!", e)
+        console.error(e)
     }
     metrics1.totalQueries ++
     metrics1.lastTenSeconds ++
     metrics1.queriesPerSecond ++
-    setImmediate(loop)
+    setImmediate(() => queryLoop(db))
   }
 }
 
@@ -90,7 +89,7 @@ const outputMetrics = (name, db, metrics) => {
 }
 
 const database = 'benchmark-replication'
-const updateCount = 2000
+const updateCount = 20000
 
 // Start
 console.log("Starting IPFS daemons...")
@@ -152,7 +151,7 @@ pMapSeries([conf1, conf2], d => startIpfs(d))
                 process.exit(0)
               }
             } catch (e) {
-              console.error("!", e)
+              console.error(e)
             }
           }, 1000)
         }
