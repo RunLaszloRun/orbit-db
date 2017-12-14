@@ -195,12 +195,10 @@ describe('orbit-db - Replication', function() {
           assert.equal(replicateProgressEvents[0].entry.clock.time, 1)
           assert.equal(replicateProgressEvents[0].replicationInfo.max, 1)
           assert.equal(replicateProgressEvents[0].replicationInfo.progress, 1)
-          assert.deepEqual(replicateProgressEvents[0].replicationInfo.have, { 1: true })
 
           const replicatedEvents = events.filter(e => e.event === 'replicated')
           assert.equal(replicatedEvents[0].replicationInfo.max, 1)
           assert.equal(replicatedEvents[0].replicationInfo.progress, 1)
-          assert.deepEqual(replicatedEvents[0].replicationInfo.have, { 1: true })
 
           done()
         }
@@ -288,7 +286,7 @@ describe('orbit-db - Replication', function() {
         db2.events.on('replicated', (address, length) => {
           eventCount['replicated'] += length
           current = db2._replicationInfo.progress
-          // console.log("[replicated]", '#' + eventCount['replicated'] + ':', current, '/', total, '| Tasks (in/queued/running/out):', db2._loader.tasksRequested, '/',  db2._loader.tasksQueued,  '/', db2._loader.tasksRunning, '/', db2._loader.tasksFinished, "|", db2._loader._stats.a, db2._loader._stats.b, db2._loader._stats.c, db2._loader._stats.d)
+          console.log("[replicated]", '#' + eventCount['replicated'] + ':', current, '/', total, '| Tasks (in/queued/running/out):', db2._loader.tasksRequested, '/',  db2._loader.tasksQueued,  '/', db2._loader.tasksRunning, '/', db2._loader.tasksFinished, "|", db2._loader._stats.a, db2._loader._stats.b, db2._loader._stats.c, db2._loader._stats.d)
           assert.equal(current, eventCount['replicated'])
           assert.equal(total, expectedEventCount)
 
@@ -338,13 +336,9 @@ describe('orbit-db - Replication', function() {
             assert.equal(replicateProgressEvents[0].entry.clock.time, expectedEventCount)
             assert.equal(replicateProgressEvents[0].replicationInfo.max, expectedEventCount)
             assert.equal(replicateProgressEvents[0].replicationInfo.progress, 1)
-            let obj = {}
-            obj[expectedEventCount.toString()] = true
-            assert.deepEqual(replicateProgressEvents[0].replicationInfo.have, obj)
 
             const replicatedEvents = events.filter(e => e.event === 'replicated')
             assert.equal(replicatedEvents[0].replicationInfo.max, expectedEventCount)
-            assert.deepEqual(replicatedEvents[0].replicationInfo.have[expectedEventCount.toString()], true)
             assert.equal(replicatedEvents[replicatedEvents.length - 1].replicationInfo.progress, expectedEventCount)
 
             resolve()
